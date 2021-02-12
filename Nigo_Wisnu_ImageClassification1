@@ -1,0 +1,443 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.7.4"
+    },
+    "colab": {
+      "name": "Nigo Wisnu_ImageClassification2",
+      "provenance": [],
+      "collapsed_sections": [],
+      "include_colab_link": true
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/nigowisnu/Tugas-Python/blob/main/Nigo_Wisnu_ImageClassification1\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "TQ0QIPX37Q48",
+        "outputId": "cdca1191-7fd6-4c9b-bf21-6fbccca78395",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "source": [
+        "print(\"Hello World\")"
+      ],
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Hello World\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "xyiyd0kMooXM"
+      },
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "H215ikbNVVZS",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "8f8bd71e-8f84-47e3-9094-b6d8efc7b451"
+      },
+      "source": [
+        "cd /content/drive/MyDrive/Colab Notebooks "
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "/content/drive/MyDrive/Colab Notebooks\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "z7VB1d4wVdov",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "6664afb6-4b00-4b4f-817e-9d1e5a824099"
+      },
+      "source": [
+        "ls"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            " \u001b[0m\u001b[01;34m3scene\u001b[0m/                             \u001b[01;34mLeaf\u001b[0m/\n",
+            " best_weight_scene_mobileNet.h5     'Nigo Wisnu_ImageClassification2.ipynb'\n",
+            "'Copy of scenes_nn_4 layers.ipynb'   \u001b[01;34mnnmodel_scene\u001b[0m/\n",
+            " forest_test.jpg\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "5IGm26ZzVGBs"
+      },
+      "source": [
+        "# import the necessary packages\n",
+        "from keras.models import Sequential\n",
+        "from keras.layers.core import Activation\n",
+        "from keras.layers.core import Flatten\n",
+        "from keras.layers.core import Dense\n",
+        "from keras.optimizers import Adam\n",
+        "from sklearn.preprocessing import LabelBinarizer\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.metrics import classification_report\n",
+        "from PIL import Image\n",
+        "from imutils import paths\n",
+        "import numpy as np\n",
+        "import os"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0-5PXYTsVGBw",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "64c7c58b-aa0a-404f-d976-e3ef5ecaaa33"
+      },
+      "source": [
+        "# grab all image paths in the input dataset directory, then initialize\n",
+        "# our list of images and corresponding class labels\n",
+        "print(\"[INFO] loading images...\")\n",
+        "imagePaths = paths.list_images(\"Leaf\")\n",
+        "data = []\n",
+        "labels = []"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "[INFO] loading images...\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "9Q-KXSsGVGB0"
+      },
+      "source": [
+        "# loop over our input images\n",
+        "for imagePath in imagePaths:\n",
+        "\t# load the input image from disk, resize it to 64x64 pixels, scale\n",
+        "\t# the pixel intensities to the range [0, 1], and then update our\n",
+        "\t# images list\n",
+        "\timage = Image.open(imagePath)\n",
+        "  #preprocessing\n",
+        "\timage = np.array(image.resize((64, 64))) / 255.0 #normalisasi\n",
+        "\tdata.append(image)\n",
+        "\n",
+        "\t# extract the class label from the file path and update the\n",
+        "\t# labels list\n",
+        "\tlabel = imagePath.split(os.path.sep)[-2]\n",
+        "\tlabels.append(label)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Rzbolh88VGB2"
+      },
+      "source": [
+        "print(labels)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "twd1IeuKVGB5"
+      },
+      "source": [
+        "# encode the labels, converting them from strings to integers\n",
+        "lb = LabelBinarizer()\n",
+        "labels = lb.fit_transform(labels)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "5FPCyIqcVGB7"
+      },
+      "source": [
+        "print(labels)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ktZ5hNYwVGB9"
+      },
+      "source": [
+        "# perform a training and testing split, using 75% of the data for\n",
+        "# training and 25% for evaluation\n",
+        "(trainX, testX, trainY, testY) = train_test_split(np.array(data),\tnp.array(labels), test_size=0.25, shuffle=True)\n",
+        "print(trainX.shape)\n",
+        "print(testX.shape)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "MSxR7GLQvrUP"
+      },
+      "source": [
+        "from keras.layers import Convolution2D, MaxPooling2D\n",
+        "from keras.models import Sequential\n",
+        "from keras.layers.core import Flatten, Dense\n",
+        "\n",
+        "model1 = Sequential()\n",
+        "model1.add(Convolution2D(8, (3,3), activation='relu', input_shape=(64,64,3)))\n",
+        "model1.add(MaxPool2D(2,2))\n",
+        "model1.add(Convolution2D(16, (3,3), activation='relu'))\n",
+        "model1.add(MaxPool2D(2,2))\n",
+        "#fully connected layer\n",
+        "model1.add(Flatten())\n",
+        "model1.add(Dense(100, activation='relu'))\n",
+        "model1.add(Dense(5, activation='softmax'))\n",
+        "\n",
+        "model1.summary()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "L0TdWxuFPkT3"
+      },
+      "source": [
+        "model.summary()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "scrolled": true,
+        "id": "ggcSdj_aVGCB"
+      },
+      "source": [
+        "# train the model using the Adam optimizer\n",
+        "print(\"[INFO] training network...\")\n",
+        "opt = Adam(lr=1e-3, decay=1e-3 / 50)\n",
+        "model1.compile(loss=\"categorical_crossentropy\", optimizer=opt, metrics=[\"accuracy\"])"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3bbMakb0w-XZ"
+      },
+      "source": [
+        "H = model1.fit(trainX, trainY, validation_data=(testX, testY), epochs=25, batch_size=32)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "98_oXi-lcgux"
+      },
+      "source": [
+        "import matplotlib.pyplot as plt\n",
+        "\n",
+        "print(H.history.keys())\n",
+        "# summarize history for accuracy\n",
+        "plt.plot(H.history['accuracy'])\n",
+        "plt.plot(H.history['val_accuracy'])\n",
+        "plt.title('model accuracy')\n",
+        "plt.ylabel('accuracy')\n",
+        "plt.xlabel('epoch')\n",
+        "plt.legend(['train', 'test'], loc='upper left')\n",
+        "plt.show()\n",
+        "# summarize history for loss\n",
+        "plt.plot(H.history['loss'])\n",
+        "plt.plot(H.history['val_loss'])\n",
+        "plt.title('model loss')\n",
+        "plt.ylabel('loss')\n",
+        "plt.xlabel('epoch')\n",
+        "plt.legend(['train', 'test'], loc='upper left')\n",
+        "plt.show()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "lPAZkmBJVGCD"
+      },
+      "source": [
+        "# evaluate the network\n",
+        "print(\"[INFO] evaluating network...\")\n",
+        "predictions = model1.predict(testX, batch_size=32)\n",
+        "print(classification_report(testY.argmax(axis=1),\n",
+        "\tpredictions.argmax(axis=1), target_names=lb.classes_))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4uBcj8x8iwTw"
+      },
+      "source": [
+        "model.save('nnmodel_scene')"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "AOwJT2jLVGCN"
+      },
+      "source": [
+        "import cv2\n",
+        "import matplotlib.pyplot as plt\n",
+        "image1='forest_test.jpg'"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "PkM68K4GVGCP"
+      },
+      "source": [
+        "img_array = cv2.imread(image1)\n",
+        "plt.imshow(img_array)\n",
+        "plt.show()\n",
+        "# print(type(img_array))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1ZkNY8LWVGCR"
+      },
+      "source": [
+        "image_testing = Image.open('forest_test.jpg')\n",
+        "image_testing = np.array(image_testing.resize((64, 64))) / 255.0\n",
+        "image_testing.shape"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "qL66nfOcVGCT"
+      },
+      "source": [
+        "image_testing = np.expand_dims(image_testing, axis=0)\n",
+        "print(image_testing.shape)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vTy9yP1AVGCV"
+      },
+      "source": [
+        "output = model.predict(image_testing, 1)\n",
+        "print(output)\n",
+        "print(lb.classes_[output.argmax(axis=1)])"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "cu5SSxXyiOs3"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
